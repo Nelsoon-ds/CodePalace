@@ -122,7 +122,8 @@ Each phase breaks down into concrete activities accompanied by curated documenta
 ### Step 4: Submission Enqueueing & SSE Event Hub
 * **Activities:**
   * Implement `POST /api/sessions/{id}/submissions`.
-  * In a single database transaction: store submission, create `run (status=QUEUED)`, insert `job`, and trigger `NOTIFY`.
+  * In a single database transaction: store submission, create `run (status=QUEUED)`, insert `job`, and trigger `NOTIFY jobs_channel, '{"run_id":"..."}'`.
+  * **Payload Rule:** Keep `NOTIFY` payload minimal (<8KB Postgres limit) — send only the `run_id`, never raw source code.
   * Create internal endpoint `POST /internal/run-events` (called by `exec-runner` to report status transitions).
   * Create client SSE endpoint `GET /api/runs/{id}/events` using `SseEmitter` to stream live assertions.
 * **Curated Readings & Docs:**
@@ -151,12 +152,13 @@ Each phase breaks down into concrete activities accompanied by curated documenta
   * Build a workspace dashboard displaying the user's workspaces and active sessions.
   * Store auth tokens in memory with silent renewal on 401.
 
-### Step 3: Workspace Shell & Monaco Editor
+### Step 3: Workspace Shell & Monaco Editor (Single-File UX)
 * **Activities:**
-  * Build three-pane layout: session sidebar (left), Monaco editor (center), results panel (bottom/right).
+  * Build focused three-pane layout: session sidebar (left), single-file Monaco editor (center), results panel (bottom/right).
+  * Adopt single-file editor model (LeetCode/Codewars style): no multi-tab or file-tree complexity in M1. Switching katas mounts the selected code directly into the single editor instance.
   * Integrate `@monaco-editor/react`, binding language to `javascript`.
   * Implement debounced autosave: send `PUT /api/sessions/{id}/draft` after 800ms idle or on window blur.
-  * Use Zustand to store active tab and console layout state.
+  * Use Zustand to store active session and console layout state.
 * **Curated Readings & Docs:**
   * [@monaco-editor/react Documentation](https://github.com/suren-atoyan/monaco-react) — Multi-model support, editor configuration, and event listeners.
   * [Zustand Getting Started](https://zustand.docs.pmnd.rs/getting-started/introduction) — Minimal boilerplate global UI state management.
@@ -189,10 +191,10 @@ Each phase breaks down into concrete activities accompanied by curated documenta
   * [Anthropic Docs: Tool Use (Function Calling)](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) — Enforcing structured schema responses across LLM providers.
   * [Spring AI: Structured Output Converters](https://docs.spring.io/spring-ai/reference/api/structured-output-converter.html) — (Optional) Native Spring abstraction for model-agnostic outputs.
 
-### Step 2: Automated Sandbox Validation Loop
+### Step 2: Automated Sandbox Validation Loop (Regex Mutations)
 * **Activities:**
   * Run the AI-generated `reference_solution` against the `test_suite` inside the Phase 1 execution runner; verify it passes 100%.
-  * Apply mutation strategies (e.g. constant return, swapped arguments, off-by-one, null return) to create 2–3 mutant solutions.
+  * Apply lightweight regex string mutations in Spring Boot (constant return `return null;`, inverted comparisons `===` → `!==`, off-by-one `<` → `<=`). No complex AST parsing needed.
   * Run the suite against each mutant; verify the suite fails on all mutants.
   * If validation fails: trigger `critique()` prompt to repair (max 2 retries), or mark kata as `DRAFT`.
 * **Curated Readings & Docs:**

@@ -74,3 +74,21 @@ Secrets in Actions: GHCR token, VM SSH key. Secrets on VM: `.env` (DB password, 
 - Nightly `pg_dump` to local disk rotation (7 days) — suite corpus + accounts is the only valuable state.
 - `api` actuator health `/actuator/health` consumed by compose healthchecks; Uptime-Kuma optional.
 - Runner logs via docker logging driver (json-file, rotated, 10MB rolling stop).
+
+## Local Development Setup (Developer PC / WSL 2)
+
+All initial development (M0 through M3) is designed to run **100% locally on the developer machine** without incurring cloud costs:
+
+1. **Backing Services (Docker Compose):**
+   * Run only infrastructure dependencies via `compose.yaml`:
+     ```bash
+     docker compose up -d db socket-proxy
+     ```
+2. **Local Runtimes (Fast Feedback & Debugging):**
+   * **`api`:** Runs natively via `./mvnw spring-boot:run` (Java 21/25, connects to local Postgres on `localhost:5432`).
+   * **`exec-runner`:** Runs natively via `node runner.js` (Node 22+, connects to local Postgres and `localhost:2375` socket proxy).
+   * **`frontend`:** Runs via Vite `npm run dev` with instant Hot Module Reloading (HMR) on `localhost:5173`.
+3. **WSL 2 Integration:**
+   * When developing in WSL 2 (Ubuntu), enable Docker Desktop's **WSL Integration** (Settings → Resources → WSL Integration) or install the native `docker.io` package to allow `exec-runner` access to Docker.
+4. **Cloud Parity:**
+   * Once validated locally, deployment to a GCP Compute Engine VM uses the exact same `compose.yaml` with production environment flags.

@@ -20,8 +20,8 @@ Monaco's weight cost is irrelevant here (kata workspaces are heavy-use, not mobi
 |---|---|---|
 | Login / Register | email + password forms | M1 |
 | Workspaces | grid of user workspaces | M1 |
-| Workspace shell | left: session list; center: **Monaco editor per session**; right: tabs (`Chat`, `Runs`); bottom: results console | M1 (single active session) → M4 (multi-tab) |
-| Generation picker | language/category/theme/difficulty | M2 |
+| Workspace shell | left: kata description & session list; center: **single active Monaco editor**; right/bottom: console results & run history | M1 (single-file editor) |
+| Generation picker | language/category/theme/difficulty modal | M2 |
 | Agent chat | full width, tool traces inline | M4 |
 
 ## State & data flow
@@ -32,19 +32,22 @@ Monaco's weight cost is irrelevant here (kata workspaces are heavy-use, not mobi
 - **Autosave:** debounced `PUT /sessions/{id}/draft` at 800ms idle + on blur; editor value hydrated from last submission *or* draft on load.
 - **Auth:** JWT in memory + silent-refresh attempt on 401 → redirect login; no cookies/local storage of tokens longer than the session.
 
-## Editor-per-session wiring
+## Single-File Editor UX (Locked Simplification)
+
+Rather than emulating a multi-file IDE with tabs and a file tree, CodePalace adopts a **LeetCode / Codewars-style single-file editor per kata**:
 
 ```mermaid
 flowchart LR
-    WS[Workspace shell] --> S1[Session tab: kata A]
-    WS --> S2[Session tab: kata B, later]
-    S1 --> E[Monaco instance]
-    E -->|debounced autosave| API[api draft endpoint]
-    E -->|Submit| API2[api submissions]
+    WS[Workspace Shell] --> S1[Active Session: Kata]
+    S1 --> E[Single Monaco Instance]
+    E -->|debounced autosave 800ms| API[api draft endpoint]
+    E -->|Submit button| API2[api submissions]
     SSO[SSE run events] --> CONSOLE[Results console]
 ```
 
-One Monaco instance per active session; instances are kept-alive components mounted per open session tab so their undo stacks survive tab switches.
+- **One editor instance per active session:** Mounts the session's code (e.g. `solution.js`) directly.
+- **Zero multi-tab complexity:** Switching to a different kata simply re-hydrates the single editor with that kata's code. This eliminates multi-model memory leaks and tab-state synchronization headaches in React.
+- **Undo stack:** Handled natively by the Monaco instance for the currently active kata.
 
 ## Results console UX
 

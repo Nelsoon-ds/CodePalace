@@ -34,13 +34,21 @@ Mandatory — see the [roadmap push-back](01-vision-and-roadmap.md#deliberate-pu
 suite = generate(...)
 ref_result  = sandbox.run(reference_solution, suite)
 assert ref_result passed
-mutations   = apply(strategies: [constant_return, swapped_args, off_by_one, null_guard], reference_solution, max 5)
+mutations   = apply(strategies: [constant_return, inverted_condition, off_by_one], reference_solution, max 3)
 mut_results = sandbox.run(mutation, suite) for each mutation
 assert all(mut_results failed)
 on failure → critique(original, failure) → regenerate suite only (≤2 passes) → else status=DRAFT
 ```
 
-A suite that passes reference *and* kills mutations is functionally discriminating. This is what makes the retrieval corpus trustworthy for mode 2. Mutation strategies are static regex/AST-lite transforms — no property-based mutation framework needed in v1.
+A suite that passes reference *and* kills mutations is functionally discriminating. This is what makes the retrieval corpus trustworthy for mode 2.
+
+**Mutation Strategy Simplification (Regex-Only):**
+Rather than introducing heavy Abstract Syntax Tree (AST) parsers (like Babel or JavaParser), mutations are generated via deterministic regex string replacements directly in Spring Boot:
+1. **Constant Return:** Replace the primary return statement (`return\s+[^;]+;` → `return null;` or `return 0;`).
+2. **Inverted Condition:** Flip the first equality or boolean check (`===` → `!==` or `>` → `<`).
+3. **Off-by-One:** Mutate boundary operators (`<` → `<=`).
+
+If the AI-generated test suite fails to catch these obvious logic mutations, it is discarded or retried.
 
 ## Mode 2 — Agent with DB tools (M4)
 
