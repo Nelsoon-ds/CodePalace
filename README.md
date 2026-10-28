@@ -35,6 +35,7 @@ CodePalace is an AI-driven coding-kata training platform. Users get an IDE-like 
 | [05-data-model-api.md](docs/05-data-model-api.md) | ER model, hidden-suite privacy invariant, REST/SSE endpoint draft |
 | [06-devops.md](docs/06-devops.md) | Monorepo layout, compose topology, DB decision matrix, VM sizing, CI |
 | [07-frontend.md](docs/07-frontend.md) | Monaco vs CodeMirror, workspace shell, state management |
+| [08-build-path-and-readings.md](docs/08-build-path-and-readings.md) | Implementation phases, activities, and curated documentation/reading list |
 
 ## Status
 
