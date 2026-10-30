@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Phase 1, Step 3: Watchdog & resource limits
+- Resource caps in `createContainer`: 256MB memory with swap disabled (`MemorySwap` = `Memory`, both in bytes), 1.0 CPU, 128 PIDs.
+- 10s wall-clock watchdog (`timeoutMs` option) kills the container; `runInSandbox` returns `timedOut`, `oomKilled` and `truncated` flags, since exit 137 alone is ambiguous.
+- Output is streamed and tail-capped at 64KB per stream (`TailBuffer`) instead of loading all logs after exit. Known limitation: vitest's JSON report is on stdout, so a report over 64KB would be cut off and fail to parse.
+- Added `runner/limits-check.js` (negative tests): infinite loop, PID exhaustion, unbounded fork bomb, memory hog (OOM), log flood, disk fill. All pass and no containers are left behind.
+- Disk quota gap closed. `StorageOpt` is accepted but not enforced by this Docker's overlayfs/containerd driver (a 300MB write succeeded with `size=100m`), so instead every path `kata` can write to is a size-capped tmpfs: added `/sandbox/.vitest`, `/var/tmp` and `/home/kata` (16MB each) alongside `/tmp` (64MB) and `/sandbox/tmp` (32MB). `limits-check.js` now verifies per-path write caps; `/sandbox`, `/etc`, `/usr/local` and `/` accept 0MB.
+- The fork bomb took about 1s longer than the timeout to be killed under load.
+
 ### Phase 1, Step 2: Standalone container runner
 - Added `runner/test-sandbox.js`: creates a container via dockerode, streams `src/solution.mjs` and `tests/suite.test.mjs` in as an in-memory tar (`tar-stream`), starts it, demuxes stdout/stderr, parses the vitest JSON and force-removes the container in `finally`.
 - **Decision: writable root filesystem instead of `ReadonlyRootfs`.** Docker's archive API (`PUT /containers/{id}/archive`) rejects uploads to containers with a read-only rootfs, even into tmpfs paths. Compensating hardening:
@@ -13,7 +21,7 @@
 - Added `runner/security-check.js`: runs a probe suite inside the real sandbox config and asserts non-root, no capabilities, `no_new_privs`, no network/DNS, no writes to suite/src/vitest/`/etc`/`/usr`, `noexec` on `/tmp`, no Docker socket, no secrets in env (18/18 pass). `runInSandbox` is now exported from `test-sandbox.js`.
 - Docs `03` and `08` updated to reflect the writable-root decision and the image changes.
 - Revisit options (volume upload, or stdin tar pipe) when hardening in Step 3 / Phase 2. Volume upload needs the socket proxy to allow volumes.
-- Known gap: the container writable layer has no disk quota yet (`StorageOpt` not set). Memory, CPU and PID limits and the wall-clock watchdog land in Step 3.
+- Memory, CPU and PID limits and the wall-clock watchdog landed in Step 3, along with the disk cap (see above).
 
 ### Phase 1, Step 1: Runner image (`sandbox-images/node/`)
 - Base image pinned by digest: `node:22-alpine@sha256:fe4f6d74…9914`.

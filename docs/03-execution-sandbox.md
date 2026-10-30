@@ -33,10 +33,10 @@ Docker's archive API (`PUT /containers/{id}/archive`) rejects uploads to any con
 
 - Non-root `kata` (UID 10001), `--cap-drop ALL`, `no-new-privileges`, no network.
 - Everything under `/sandbox` except `tmp/` and `.vitest/` is **root-owned and not writable by `kata`**: uploaded code and suite (0444), `node_modules/vitest`, and `vitest.config.mjs`. User code cannot rewrite the suite or patch vitest on disk.
-- Writable scratch is limited to `/tmp`, `/sandbox/tmp` (tmpfs, `noexec,nosuid`, size-capped) and `/sandbox/.vitest` (report dir).
-- Verified by `runner/security-check.js` (probe suite run inside the real sandbox config).
+- Writable scratch is limited to `/tmp`, `/var/tmp`, `/home/kata`, `/sandbox/tmp` and `/sandbox/.vitest`, all size-capped tmpfs (`noexec,nosuid`, 16–64MB). These are the only places `kata` has write permission, so the container's writable layer can't be filled. Docker's `StorageOpt` quota is **not** used: the overlayfs/containerd driver accepts it but doesn't enforce it. If a new image adds `kata`-writable paths, add a tmpfs for them (`runner/limits-check.js` will catch it).
+- Verified by `runner/security-check.js` (probe suite run inside the real sandbox config) and `runner/limits-check.js` (resource limits and disk fill).
 
-Residual risks: user code runs in the vitest process, so in-memory monkeypatching of `expect` and printing forged JSON are still possible. Treat results as produced by untrusted code. The container writable layer has no disk quota yet. Alternatives to revisit when hardening: upload into a volume mounted read-only (needs socket-proxy `VOLUMES=1`), or pipe the tar over stdin into a tmpfs.
+Residual risks: user code runs in the vitest process, so in-memory monkeypatching of `expect` and printing forged JSON are still possible. Treat results as produced by untrusted code. Alternatives to revisit when hardening: upload into a volume mounted read-only (needs socket-proxy `VOLUMES=1`), or pipe the tar over stdin into a tmpfs.
 
 ## Run lifecycle (state machine)
 
