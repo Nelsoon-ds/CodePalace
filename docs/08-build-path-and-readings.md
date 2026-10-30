@@ -13,10 +13,11 @@ Each phase breaks down into concrete activities accompanied by curated documenta
 ### Step 1: Build the Runner Docker Image (`sandbox-images/node/`)
 * **Activities:**
   * Create a Dockerfile based on `node:22-alpine`.
-  * Pre-install `vitest` pinned to a specific version.
+  * Pre-install `vitest` pinned to a specific version (5.0.5, local install in `/sandbox`); pin the base image by digest.
   * Create a non-privileged system user (`kata`, UID 10001) and set it as `USER kata`.
-  * Configure `/sandbox` as the default working directory with strict ownership.
-  * Define entrypoint: `vitest run --reporter=json`.
+  * Configure `/sandbox` as the default working directory, root-owned; only `tmp/` and `.vitest/` are writable by `kata`.
+  * Add `vitest.config.mjs` (JSON reporter with `stdout: true`, caches moved to `/tmp`; vitest 5 otherwise writes JSON to a file).
+  * Define entrypoint: `vitest run --configLoader=runner` (the config supplies the JSON reporter).
 * **Curated Readings & Docs:**
   * [Docker Official: Best practices for Dockerfile instructions](https://docs.docker.com/build/building/best-practices/) — Deep dive on non-root users, layer caching, and minimizing attack surface.
   * [OWASP Docker Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html) — Key security rules: non-root user execution, read-only root filesystems, and dropping capabilities.
@@ -25,8 +26,9 @@ Each phase breaks down into concrete activities accompanied by curated documenta
 ### Step 2: Standalone Container Runner (`runner/test-sandbox.js`)
 * **Activities:**
   * Write a standalone Node script utilizing Docker's Engine API (via Docker socket or HTTP client).
-  * Create a container in the stopped state with `--network none`, `--read-only`, and tmpfs scratch spaces.
-  * Stream in-memory `solution.js` and `suite.test.js` into `/sandbox` using the Docker Archive API (`PUT /containers/{id}/archive`).
+  * Create a container in the stopped state with `--network none`, `--cap-drop ALL`, `no-new-privileges`, and tmpfs scratch spaces. **Not `--read-only`**: the archive API rejects uploads to read-only containers (see [03 — writable root decision](03-execution-sandbox.md#decision-writable-root-filesystem-no---read-only)).
+  * Stream in-memory `src/solution.mjs` and `tests/suite.test.mjs` (ESM, root-owned, mode 0444) into `/sandbox` using the Docker Archive API (`PUT /containers/{id}/archive`).
+  * Verify isolation with `runner/security-check.js`.
   * Start container, capture stdout/stderr, parse the output JSON, and forcefully remove the container in a `finally` block.
 * **Curated Readings & Docs:**
   * [Docker Engine API Reference: Containers](https://docs.docker.com/reference/api/engine/version/v1.45/#tag/Container) — Specifically `POST /containers/create`, `PUT /containers/{id}/archive`, `POST /containers/{id}/start`, and `GET /containers/{id}/logs`.

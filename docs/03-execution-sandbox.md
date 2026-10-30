@@ -20,12 +20,23 @@ The single riskiest component: CodePalace runs untrusted user code by design. Th
 
 | Image | Base | Contents | Owner |
 |---|---|---|---|
-| `codepalace/runner-node:22` | `node:22-alpine` | `vitest` pinned, non-root `kata` user, `/sandbox` workdir, entrypoint runs `vitest run --reporter=json` | built by CI from `sandbox-images/node/` |
+| `codepalace/runner-node:22` | `node:22-alpine` (pinned by digest) | `vitest` 5.0.5 pinned (local install), non-root `kata` user, `/sandbox` workdir, `vitest.config.mjs` (JSON reporter to stdout, caches in `/tmp`), entrypoint `vitest run --configLoader=runner` | built by CI from `sandbox-images/node/` |
 | `codepalace/runner-java:25` (M4) | `eclipse-temurin:25-jre-alpine` | JUnit 5 console launcher prewarmed; dependencies vendored at image build | built from `sandbox-images/java/` |
 
 Images are built once and pinned by digest on the VM — user runs never `docker build`.
 
 Resource budgets (initial): Node gets `256MB / 1.0 CPU / 10s wall clock`; Java target is `512MB / 30s`, revisited with measurement data at M4.
+
+### Decision: writable root filesystem (no `--read-only`)
+
+Docker's archive API (`PUT /containers/{id}/archive`) rejects uploads to any container with a read-only rootfs (`400 container rootfs is marked read-only`), including into tmpfs paths. We therefore run with a writable root and compensate:
+
+- Non-root `kata` (UID 10001), `--cap-drop ALL`, `no-new-privileges`, no network.
+- Everything under `/sandbox` except `tmp/` and `.vitest/` is **root-owned and not writable by `kata`**: uploaded code and suite (0444), `node_modules/vitest`, and `vitest.config.mjs`. User code cannot rewrite the suite or patch vitest on disk.
+- Writable scratch is limited to `/tmp`, `/sandbox/tmp` (tmpfs, `noexec,nosuid`, size-capped) and `/sandbox/.vitest` (report dir).
+- Verified by `runner/security-check.js` (probe suite run inside the real sandbox config).
+
+Residual risks: user code runs in the vitest process, so in-memory monkeypatching of `expect` and printing forged JSON are still possible. Treat results as produced by untrusted code. The container writable layer has no disk quota yet. Alternatives to revisit when hardening: upload into a volume mounted read-only (needs socket-proxy `VOLUMES=1`), or pipe the tar over stdin into a tmpfs.
 
 ## Run lifecycle (state machine)
 
@@ -38,7 +49,7 @@ QUEUED → PROVISIONING → RUNNING → COMPLETED
 `exec-runner` duties per run:
 
 1. Acquire slot from local semaphore (**max 3 concurrent containers** — VM budget, see [06-devops.md](06-devops.md#vm-sizing)).
-2. Create container: `--network none --read-only --memory 256m --cpus 1.0 --pids-limit 128 --workdir /sandbox --tmpfs /tmp:size=64m --tmpfs /sandbox/tmp:size=32m`, code + suite mounted read-only, stdout/stderr captured (tail-capped 64KB).
+2. Create container (stopped): `--network none --cap-drop ALL --security-opt no-new-privileges --memory 256m --cpus 1.0 --pids-limit 128 --workdir /sandbox --tmpfs /tmp:noexec,nosuid,size=64m --tmpfs /sandbox/tmp:noexec,nosuid,size=32m`. Code + suite are uploaded via the Docker archive API as a root-owned, mode 0444 tar (`src/`, `tests/`), then stdout/stderr is captured (tail-capped 64KB). Memory/CPU/PID caps land in build-path Phase 1 Step 3.
 3. `docker start`, follow events; enforce wall clock with `docker kill` fallback.
 4. Parse vitest JSON; emit run events; persist results row.
 5. `docker rm -f` in all paths (finally block), release slot.
