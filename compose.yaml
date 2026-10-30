@@ -1,0 +1,8 @@
+services:
+  nginx:          # 80/443, TLS via certbot volume, proxies /api → api:8080
+  frontend:       # static build, internal only
+  api:            # 8080 internal; JWT secret, DB url, AI key via env_file
+  exec-runner:    # 8090 internal; talks to db + socket-proxy only
+  db:             # postgres:16, volume pgdata, LISTEN/NOTIFY
+  socket-proxy:   # tecnativa/docker-socket-proxy; limited verb allowlist
+                  #   (containers create/start/delete/inspect only, no volumes, no exec)
