@@ -6,7 +6,7 @@ Desktop.ini
 *:Zone.Identifier
 .DS_Store
 *~
-
+*.swp
 # =========================
 # Node.js
 # =========================
