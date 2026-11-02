@@ -7,32 +7,33 @@ services:
       POSTGRES_DB: codepalace
       POSTGRES_USER: codepalace
     ports:
-      - "127.0.0.1:5432:5432"   # local dev: api/exec-runner run natively
+      - "127.0.0.1:5432:5432" # local dev: api/exec-runner run natively
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db/migration/V1__init.sql:/docker-entrypoint-initdb.d/V1__init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U codepalace -d codepalace"]
-      interval: 5s
+      interval: 5s 
       timeout: 3s
       retries: 10
     networks:
       - backend
 
   socket-proxy:
-    image: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0  # pin a digest later
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0 # pin a digest later
     restart: unless-stopped
-    privileged: true   # required by the proxy for SELinux/AppArmor hosts
+    privileged: true # required by the proxy for SELinux/AppArmor hosts
     environment:
-      CONTAINERS: 1    # container create/start/wait/logs/remove and archive upload
+      CONTAINERS: 1 # container create/start/wait/logs/remove and archive upload
       POST: 1
       VOLUMES: 0
-      EXEC: 0          # NOTE: does not block /containers/{id}/exec; see docs/03
+      EXEC: 0 # NOTE: does not block /containers/{id}/exec; see docs/03
       NETWORKS: 0
       IMAGES: 0
       SWARM: 0
       SYSTEM: 0
     ports:
-      - "127.0.0.1:2375:2375"   # local dev: exec-runner connects via localhost
+      - "127.0.0.1:2375:2375" # local dev: exec-runner connects via localhost
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
