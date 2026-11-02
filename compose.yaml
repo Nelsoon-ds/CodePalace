@@ -1,8 +1,51 @@
 services:
-  nginx:          # 80/443, TLS via certbot volume, proxies /api → api:8080
-  frontend:       # static build, internal only
-  api:            # 8080 internal; JWT secret, DB url, AI key via env_file
-  exec-runner:    # 8090 internal; talks to db + socket-proxy only
-  db:             # postgres:16, volume pgdata, LISTEN/NOTIFY
-  socket-proxy:   # tecnativa/docker-socket-proxy; limited verb allowlist
-                  #   (containers create/start/delete/inspect only, no volumes, no exec)
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: codepalace
+      POSTGRES_USER: codepalace
+    ports:
+      - "127.0.0.1:5432:5432"   # local dev: api/exec-runner run natively
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codepalace -d codepalace"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend
+
+  socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0  # pin a digest later
+    restart: unless-stopped
+    privileged: true   # required by the proxy for SELinux/AppArmor hosts
+    environment:
+      CONTAINERS: 1    # container create/start/wait/logs/remove and archive upload
+      POST: 1
+      VOLUMES: 0
+      EXEC: 0          # NOTE: does not block /containers/{id}/exec; see docs/03
+      NETWORKS: 0
+      IMAGES: 0
+      SWARM: 0
+      SYSTEM: 0
+    ports:
+      - "127.0.0.1:2375:2375"   # local dev: exec-runner connects via localhost
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - backend
+
+  # nginx:          # 80/443, TLS via certbot volume, proxies /api → api:8080
+  # frontend:       # static build, internal only
+  # api:            # 8080 internal; JWT secret, DB url, AI key via env_file
+  # exec-runner:    # 8090 internal; talks to db + socket-proxy only
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
+    driver: bridge

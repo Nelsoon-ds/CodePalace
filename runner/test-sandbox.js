@@ -145,8 +145,25 @@ async function runInSandbox(entries, { timeoutMs = TIMEOUT_MS } = {}) {
 }
 
 async function main() {
+  const verbose = Boolean(process.env.VERBOSE);
+  const log = (...args) => verbose && console.log("[verbose]", ...args);
+
+  log("image:", IMAGE, "| timeout:", TIMEOUT_MS, "ms | memory:", MEMORY_BYTES, "bytes");
+  log("files:", files.map((f) => f.name).join(", "));
+  const started = Date.now();
+
   await docker.ping();
-  const { exitCode, results, stdout, stderr } = await runInSandbox(files);
+  log("docker ping ok");
+
+  const { exitCode, timedOut, oomKilled, truncated, results, stdout, stderr } =
+    await runInSandbox(files);
+
+  log(`finished in ${Date.now() - started} ms`);
+  log("timedOut:", timedOut, "| oomKilled:", oomKilled, "| truncated:", truncated);
+  if (verbose) {
+    console.log("[verbose] stdout:\n" + stdout);
+    console.log("[verbose] stderr:\n" + stderr);
+  }
 
   console.log("exit code:", exitCode);
   if (results) {
