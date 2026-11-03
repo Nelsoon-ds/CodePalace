@@ -115,8 +115,7 @@ async function runInSandbox(entries, { timeoutMs = TIMEOUT_MS } = {}) {
     const { StatusCode } = await container.wait();
     clearTimeout(timer);
 
-    await logsDone;
-    const { State } = await container.inspect();
+    const [, { State }] = await Promise.all([logsDone, container.inspect()]);
     const stdout = out.toString();
     const stderr = err.toString();
 
