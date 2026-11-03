@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Docs & tooling: generation spike write-up
+- Added `docs/09-kata-generation-spike-and-platform-design.md`: results of the Gemini kata-generation spike (branch `spike/kata-generation`, 5 of 10 katas passing all five checks in the latest run, 8 of 10 best), what the validation checks caught, the hidden-suite readability gap, and the design decisions for exercises (shared dataset plus at most two tasks) and the shared corpus.
+- Added `opencode.json` registering the Context7 MCP server so documentation lookups are available in OpenCode sessions.
+
 ### Phase 1, Step 3: Watchdog & resource limits
 - Resource caps in `createContainer`: 256MB memory with swap disabled (`MemorySwap` = `Memory`, both in bytes), 1.0 CPU, 128 PIDs.
 - 10s wall-clock watchdog (`timeoutMs` option) kills the container; `runInSandbox` returns `timedOut`, `oomKilled` and `truncated` flags, since exit 137 alone is ambiguous.
