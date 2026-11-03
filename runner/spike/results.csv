@@ -1,0 +1,11 @@
+index,title,passed,reference_passes,starter_fails,examples_match_reference,mutations_fail,blind_solver_passes,tokens_in,tokens_out,tokens_thinking,error
+1,Neutralise Array Values,false,true,true,true,true,false,2845,1653,8432,
+2,Neutralise Array,true,true,true,true,true,true,2790,1361,7861,
+3,Array Neutralisation,false,true,true,true,true,false,2865,1612,13703,
+4,Array Neutralisation,false,true,true,false,true,true,2761,1510,14303,
+5,Neutralise Array Opposites,true,true,true,true,true,true,2865,1510,6096,
+6,Array Neutralisation,true,true,true,true,true,true,2820,1511,9352,
+7,Array Neutralisation,true,true,true,true,true,true,2879,1680,6529,
+8,Array Neutralisation,false,true,true,false,true,true,2912,1615,5729,
+9,Array Neutralisation,true,true,true,true,true,true,3004,1689,7843,
+10,Array Neutralisation,false,true,true,false,true,true,2810,1461,8238,
