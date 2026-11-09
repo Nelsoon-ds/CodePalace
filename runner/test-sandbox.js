@@ -11,7 +11,7 @@ const MEMORY_BYTES = 256 * 1024 * 1024;
 const TIMEOUT_MS = 10_000;
 const OUTPUT_TAIL_BYTES = 64 * 1024;
 
-const files = [
+export const files = [
   {
     name: "src/solution.mjs",
     content: `export function reverse(s) {
@@ -65,7 +65,7 @@ class TailBuffer extends Writable {
   }
 }
 
-async function runInSandbox(entries, { timeoutMs = TIMEOUT_MS } = {}) {
+exportasync function runInSandbox(entries, { timeoutMs = TIMEOUT_MS } = {}) {
   let container;
   let timer;
   try {

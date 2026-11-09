@@ -24,7 +24,6 @@ Practicing code katas is still mostly: pick a static curated problem, write code
 ## Non-goals (v1)
 
 - Multi-node scaling, horizontal sandbox fleets
-- Leaderboards, SPOJ/Codewars-style public ranking
 - More languages (Java + JavaScript only)
 - Collaborative editing / real-time multiuser sessions
 - Ace/Cloud9-grade IDE features at MVP (multi-file tabs, refactorings) — the workspace *schema* supports them, the UI ships IDE-lite first
