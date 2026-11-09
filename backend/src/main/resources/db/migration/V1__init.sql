@@ -56,7 +56,7 @@ CREATE INDEX sessions_kata_id_idx ON sessions (kata_id);
 CREATE TABLE test_suites (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     kata_id uuid NOT NULL REFERENCES katas (id) ON DELETE CASCADE,
-    programming_language text NOT NULL CHECK (language IN ('js', 'java')),
+    programming_language text NOT NULL CHECK (programming_language IN ('js', 'java')),
     framework text NOT NULL CHECK (framework IN ('vitest', 'junit5')),
     code text NOT NULL,
     suite_hash text NOT NULL,
