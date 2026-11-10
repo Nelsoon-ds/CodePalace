@@ -1,4 +1,50 @@
 package com.codepalace.project.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password4j.Argon2Password4jPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
+
+
+@Configuration
+@EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private DataSource dataSource; // Tells it to use the data source url from application.properties
+
+    @Autowired
+    public void configAuthentication(AuthenticationManagerBuilder auth) {
+        auth.jdbcAuthentication().passwordEncoder(new Argon2Password4jPasswordEncoder())
+                .dataSource(dataSource)
+                .usersByUsernameQuery("select email, password, enabled from users where email=?")
+                .authoritiesByUsernameQuery(
+                        "SELECT u.email, r.role_name " +
+                                "FROM users u " +
+                                "JOIN user_roles ur ON u.id = ur.user_id " +
+                                "JOIN role r ON ur.role_id = r.id " +
+                                "WHERE u.email = ?"
+                )
+        ;
+    }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        http.authorizeHttpRequests(auth ->
+                        auth.requestMatchers("/", "/index.html", "/admin/**").hasAuthority("Admin")
+                                .requestMatchers("/api/**").permitAll()
+                                .anyRequest().permitAll());
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new Argon2Password4jPasswordEncoder();
+    }
 }
