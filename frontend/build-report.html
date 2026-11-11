@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CodePalace M1 frontend — build report</title>
+  <style>
+    :root{color-scheme:dark;--bg:#111312;--panel:#191c1b;--stroke:#303732;--text:#e9ede5;--muted:#9aa39a;--lime:#c9ef74;--mono:"SFMono-Regular",Consolas,monospace}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 Inter,system-ui,sans-serif}
+    header{padding:76px max(24px,calc((100vw - 980px)/2)) 62px;background:radial-gradient(ellipse at 75% 0,#283121 0,transparent 55%),#151817;border-bottom:1px solid var(--stroke)}
+    .eyebrow{font:11px var(--mono);letter-spacing:1.5px;color:var(--lime)}h1{font-size:clamp(38px,7vw,68px);line-height:1.05;letter-spacing:-3px;margin:17px 0}header p{max-width:650px;color:var(--muted);font-size:17px}
+    main{max-width:980px;margin:auto;padding:20px 24px 80px}section{padding:35px 0;border-bottom:1px solid var(--stroke)}h2{font-size:25px;letter-spacing:-.7px;margin:0 0 15px}h3{font-size:16px;margin:24px 0 8px;color:#d4e4b7}
+    p,li{color:#c0c7bf}a{color:var(--lime)}code,pre{font:12px/1.65 var(--mono)}code{color:#d8e9ae}pre{overflow:auto;padding:17px;background:#0d0f0e;border:1px solid var(--stroke);border-radius:7px;color:#c4d2b6}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--stroke);vertical-align:top}th{color:var(--lime);font-weight:600}.callout{border-left:3px solid var(--lime);padding:13px 17px;background:#1a2017;color:#d3dec6;border-radius:0 6px 6px 0}
+    .stack{display:flex;flex-wrap:wrap;gap:8px}.stack span{padding:6px 10px;border:1px solid #394239;border-radius:20px;color:#cdddaf;font:11px var(--mono)}footer{max-width:980px;margin:auto;padding:0 24px 45px;color:#747e75;font:10px var(--mono)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">CODEPALACE · M1 DELIVERY</div>
+    <h1>A focused place<br>to practice code.</h1>
+    <p>A React + Vite frontend for account access, workspaces, kata sessions, a single-file Yace editor, 800 ms autosave, submissions, and streamed test results.</p>
+    <div class="stack"><span>React</span><span>Vite</span><span>TanStack Query</span><span>Zustand</span><span>Yace</span><span>CSS Modules</span></div>
+  </header>
+  <main>
+    <section>
+      <h2>What shipped</h2>
+      <table><thead><tr><th>Screen</th><th>Implementation</th></tr></thead><tbody>
+        <tr><td>Login / Register</td><td>Controlled email/password forms use TanStack Query mutations. The access token is held in module memory, never local storage or a cookie.</td></tr>
+        <tr><td>Workspaces</td><td>Query-backed workspace grid with create/delete operations and empty, loading, error, and retry states.</td></tr>
+        <tr><td>Workspace shell</td><td>Session and kata navigation, kata prompt, one Yace editor, save status, run action, and a collapsible results console. Layout adapts to narrow screens.</td></tr>
+        <tr><td>Results</td><td>Authenticated SSE stream; assertions render as they arrive. Failed assertion diffs are expandable; hidden suite code is never requested or rendered. Timeout, OOM, and runner errors have distinct copy.</td></tr>
+      </tbody></table>
+    </section>
+    <section>
+      <h2>State and data flow</h2>
+      <p>Every REST read and write is a TanStack Query query or mutation in <code>src/api/hooks.ts</code>. The API client adds the in-memory bearer token, handles 401 responses, and coordinates a single refresh attempt. Workspace and kata responses accept either a direct list or a conventional paged <code>content</code>/<code>items</code> envelope.</p>
+      <pre><code>const saveDraft = useMutation({
+  mutationFn: (code: string) =&gt;
+    apiRequest(`/api/sessions/${sessionId}/draft`, {
+      method: "PUT",
+      body: JSON.stringify({ code }),
+    }),
+});</code></pre>
+      <p>Zustand is limited to interface state: whether the console is open and the draft save indicator. Persistent practice data remains server-authoritative. The Yace instance and undo history are mounted once per selected session.</p>
+    </section>
+    <section>
+      <h2>Autosave and editor</h2>
+      <p><code>CodeEditor.tsx</code> creates Yace with its bundled code highlighter and history, indentation, tab, and bracket-pair plugins. On load, content precedence is draft, most recent submission, then kata starter code. A timer resets on every edit and sends <code>PUT /api/sessions/{id}/draft</code> after 800 ms idle. Blur clears the timer and writes immediately. Save failures are shown in the editor and status bar.</p>
+      <pre><code>saveTimer.current = setTimeout(
+  () =&gt; void saveRequest.current(codeRef.current),
+  800,
+);</code></pre>
+      <p>Submission sends <code>POST /api/sessions/{id}/submissions</code> with the current code. The returned run ID starts an authenticated event stream at <code>/api/runs/{id}/events</code>; the run detail query supplies persisted results.</p>
+    </section>
+    <section>
+      <h2>Auth and backend alignment</h2>
+      <p>The inspected controllers declare these routes: auth login/register; workspace GET/POST/DELETE; session GET, draft PUT, PATCH, submissions POST (202); kata and category GET; and run detail plus SSE events. The declared request bodies are untyped <code>Map&lt;String,Object&gt;</code> except GETs, and controller methods currently return <code>void</code>. Run response DTOs expose status, duration, counts, assertions, output tail, and timestamp. The shell reads sessions embedded in a workspace response because no session-list route is declared.</p>
+      <div class="callout"><strong>Backend integration gaps discovered.</strong> The controllers in the checked-out worktree are stubs with no response implementation. No refresh handler exists, and the workspace-session POST route described in <code>docs/05-data-model-api.md</code> is not declared in a controller. The frontend implements the documented create-session route and makes a silent <code>/api/auth/refresh</code> attempt only when a refresh token is returned by login; those routes need corresponding backend handlers for those flows to work. A failed refresh clears memory auth and protected screens redirect to sign-in.</div>
+      <p>The current <code>SecurityConfig</code> permits all <code>/api/**</code> routes and installs no JWT filter. The client sends bearer auth, but server-side authorization cannot be considered enforced until the backend adds its JWT authentication/authorization boundary. Auth endpoints also need to return a JSON access token (and refresh token if refresh is enabled); the checked-in stubs currently return no token. Any returned tokens remain in memory. On a 401, the client tries <code>POST /api/auth/refresh</code> using the in-memory refresh token, or current access token when the response provided no refresh token, then clears auth on failure.</p>
+      <p>All code execution feedback is sourced from run status/assertion fields. No suite source is included in client types, requests, or UI.</p>
+    </section>
+    <section>
+      <h2>Run it</h2>
+      <pre><code>cd frontend
+npm install
+npm run dev
+npm run build</code></pre>
+      <p>Vite proxies <code>/api</code> to <code>http://localhost:8080</code> by default. Override with <code>VITE_API_PROXY_TARGET</code>, or set <code>VITE_API_BASE_URL</code> for a separately hosted API.</p>
+    </section>
+  </main>
+  <footer>CODEPALACE · FRONTEND M1 · BUILT TO THE CURRENT API DECLARATIONS</footer>
+</body>
+</html>

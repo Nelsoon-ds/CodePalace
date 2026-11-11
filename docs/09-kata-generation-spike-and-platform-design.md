@@ -50,9 +50,9 @@ The blind solver is the automated version of Codewars' community beta testing. I
 
 | Call | Model | Thinking |
 |---|---|---|
-| Spec | `gemini-3.5-flash-lite` | `high` |
-| Author | `gemini-3.6-flash` | `high` |
-| Blind solver | `gemini-3.5-flash-lite` | default (`minimal`) |
+| Spec | `gemini-3.6-flash` | `default` |
+| Author | `gemini-3.6-flash` | `default` |
+| Blind solver | `gemini-3.6-flash` | default (`minimal`) |
 
 `gemini-3.5-flash` is deprecated and routes to 3.6 Flash. `gemini-3.8-flash` was available and described by Google as the newest Flash model; it was not tested.
 

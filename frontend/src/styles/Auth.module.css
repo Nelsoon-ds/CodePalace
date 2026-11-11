@@ -1,0 +1,74 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #111312;
+}
+.ambient {
+  position: absolute;
+  width: 610px;
+  height: 610px;
+  right: -210px;
+  top: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(132, 162, 73, .13), transparent 68%);
+  pointer-events: none;
+}
+.topbar {
+  height: 82px;
+  padding: 0 7.5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  z-index: 1;
+}
+.brand { display: inline-flex; gap: 10px; align-items: center; font: 700 16px Manrope, sans-serif; letter-spacing: -.5px; }
+.brandIcon { display: grid; width: 27px; height: 27px; place-items: center; background: var(--accent); color: #171a16; font-size: 15px; border-radius: 8px 8px 8px 2px; }
+.topbarNote { color: #929991; font-size: 12px; }
+.panel { width: min(450px, calc(100% - 40px)); margin: auto; padding: 52px 0 72px; z-index: 1; }
+.panelMark, .footer { font: 10px var(--mono); letter-spacing: 1.35px; color: #98a08f; }
+.panel h1 { margin: 25px 0 10px; font: 600 clamp(34px, 5vw, 46px)/1.08 Manrope, sans-serif; letter-spacing: -2.5px; }
+.subhead { margin: 0; color: #909890; font-size: 14px; }
+.form { display: grid; gap: 9px; margin-top: 37px; }
+.form label, .modal label { margin-top: 7px; color: #c5cbc3; font-size: 12px; }
+.form input, .modal input {
+  border: 1px solid #343a36;
+  border-radius: 6px;
+  background: #191c1b;
+  color: #f0f1ec;
+  outline: none;
+  padding: 13px 14px;
+  font-size: 13px;
+  transition: border-color .15s;
+}
+.form input:focus, .modal input:focus { border-color: #9fbd67; }
+.form input::placeholder { color: #606862; }
+.primaryButton {
+  margin-top: 17px;
+  min-height: 47px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  color: #171a14;
+  background: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.primaryButton:hover { background: #d7f694; }
+.primaryButton:disabled { opacity: .65; cursor: wait; }
+.formFoot { display: flex; justify-content: center; gap: 6px; margin-top: 23px; color: #838b84; font-size: 12px; }
+.formFoot a { color: var(--accent); }
+.error { margin: 5px 0 0; color: #ff958d; font-size: 12px; }
+.footer { padding: 20px 7.5%; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.07); color: #626a64; font-size: 9px; }
+@media (max-width: 520px) {
+  .topbar { height: 67px; padding: 0 20px; }
+  .topbarNote { display: none; }
+  .panel { padding: 40px 0 54px; }
+}

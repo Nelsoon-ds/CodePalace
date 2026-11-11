@@ -1,21 +1,18 @@
 package com.codepalace.project.controller;
 
-import com.codepalace.project.model.Run;
-import com.codepalace.project.model.dto.client.RunResponseDto;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-@RestController()
+@RestController
 public class RunController {
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RunResponseDto> getRun(@PathVariable UUID id) {
-        Run run = runService.getRunById(id);
-        return ResponseEntity.ok(runMapper.toResponse(run));
-    }
+    @GetMapping("/api/runs/{id}")
+    public void getRun(@PathVariable("id") UUID id) {}
 
+    @GetMapping(value = "/api/runs/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public void getEvents(@PathVariable("id") UUID id) {}
 }

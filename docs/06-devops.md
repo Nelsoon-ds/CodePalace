@@ -61,7 +61,7 @@ MySQL wins nothing structural; LISTEN/NOTIFY and pgvector are what the architect
 
 ## CI/CD (GitHub Actions, mirror of prior workflow habits)
 
-1. `api`: mvn test (H2)
+1. `backend`: mvn test (H2)
 2. `runner`: node --test / vitest
 3. `frontend`: vitest + build
 4. Build images `api`, `runner`, `frontend`, `runner-node` → push GHCR (digest pins)
