@@ -24,11 +24,11 @@ public class User {
     }
 
     public UUID getUuid() {
-        return uuid;
+        return id;
     }
 
     public void setUuid(UUID uuid) {
-        this.uuid = uuid;
+        this.id = uuid;
     }
 
     public String getEmail() {
