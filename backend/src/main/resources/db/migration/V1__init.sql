@@ -8,7 +8,7 @@ CREATE TABLE users (
 CREATE TABLE workspaces (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    user_name text NOT NULL,
+    workspace_name text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
