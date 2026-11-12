@@ -27,25 +27,19 @@ public class SecurityConfig {
     public void configAuthentication(AuthenticationManagerBuilder auth) {
         auth.jdbcAuthentication().passwordEncoder(new Argon2Password4jPasswordEncoder())
                 .dataSource(dataSource)
-                .usersByUsernameQuery("select email, password, enabled from users where email=?")
-                .authoritiesByUsernameQuery(
-                        "SELECT u.email, r.role_name " +
-                                "FROM users u " +
-                                "JOIN user_roles ur ON u.id = ur.user_id " +
-                                "JOIN role r ON ur.role_id = r.id " +
-                                "WHERE u.email = ?"
-                )
+                .usersByUsernameQuery("select email, password_hash from users where email=?")
         ;
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/", "/index.html", "/admin/**").hasAuthority("Admin")
+                .authorizeHttpRequests(auth ->
+                        auth
                                 .requestMatchers("/api/**").permitAll()
                                 .anyRequest().authenticated()
-        )
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
         ;
         return http.build();
