@@ -45,6 +45,20 @@ public class Session {
 
     private Timestamp updatedAt;
 
+    @Column(name = "draft_code")
+    private String draftCode;
+
+    public Workspace getWorkspace() {
+        return workspace;
+    }
+
+    public String getDraftCode() {
+        return draftCode;
+    }
+
+    public void setDraftCode(String draftCode) {
+        this.draftCode = draftCode;
+    }
 
     public UUID getId() {
         return id;

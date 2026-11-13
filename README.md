@@ -2,6 +2,19 @@
 
 CodePalace is an AI-driven coding-kata training platform. Users get an IDE-like workspace where they solve katas in **Java** or **JavaScript**. Katas and their (hidden) test suites are AI-generated, validated, tagged with categories/themes, and persisted — so requests for relevant coding tests can either be picked in the UI or satisfied by an AI agent that retrieves tagged suites from the database before constructing new ones.
 
+## How to run it
+
+To run this code you need to build the backend and database by running:
+
+Docker compose up -d 
+
+And then CD into the frontend directory and run:
+
+npm install && npm run dev
+
+The frontend will be served at localhost:5173
+And remember to run the Spring backend service.
+
 ## Core ideas
 
 - **Editor per session** – a Monaco-based editor inside a workspace; code autosaves, submissions run against hidden suites.
