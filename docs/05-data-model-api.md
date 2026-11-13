@@ -45,21 +45,29 @@ Enforcement: repository methods return `SuiteRef` metadata without `code`; the o
 ## API surface (draft)
 
 Auth [07-frontend.md](07-frontend.md) stores JWT; all non-auth routes require `Authorization: Bearer`.
+Only `/api/auth/register`, `/api/auth/login` and `/api/auth/refresh` are public. A request without
+a valid access token answers `401` with `{"error": "unauthorized", ...}`; a resource that belongs to
+somebody else answers `404`, so the API never confirms that it exists.
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/auth/register` / `/api/auth/login` | Argon2, issue JWT (24h) |
-| GET/POST/DELETE | `/api/workspaces` / `/{id}` | workspace CRUD |
+| POST | `/api/auth/register` / `/api/auth/login` | Argon2, issue an access token (2.4h) and a refresh token (30d) |
+| POST | `/api/auth/refresh` | exchange a refresh token for a new access token |
+| GET/POST/DELETE | `/api/workspaces` / `/{id}` | workspace CRUD (scoped to the caller) |
 | POST | `/api/workspaces/{wId}/sessions` | nullable `kataId` → editor-first or kata-first |
-| PATCH | `/api/sessions/{id}` | rename/archive; `kataId` attach |
+| PATCH | `/api/sessions/{id}` | rename/archive; `kataId` attach (not implemented yet) |
 | PUT | `/api/sessions/{id}/draft` | autosave (debounced client, [07](07-frontend.md)) |
 | POST | `/api/sessions/{id}/submissions` | body; returns `202 {runId}` |
 | GET | `/api/runs/{id}` | latest run state |
 | GET | `/api/runs/{id}/events` | SSE: queued→running→assertions→summary ([03](03-execution-sandbox.md#result-streaming--persistence)) |
 | GET | `/api/categories` | taxonomy snapshot for picker |
 | GET/POST | `/api/generation/kata` | mode 1 trigger + status; body `{language, category, theme, difficulty}` |
-| GET | `/api/katas?query=&tag=&category=&difficulty=` | corpus browse (UI pick + [agent search reuse](04-ai-and-retrieval.md#retrieval-design)) |
+| GET | `/api/katas?query=&tag=&category=&difficulty=` | corpus browse (UI pick + [agent search reuse](04-ai-and-retrieval.md#retrieval-design)); published + public only, never the reference solution |
 | POST/GET | `/api/agent/messages` / `/api/agent/sessions` (M4) | agent chat; SSE incl. tool traces |
+
+Client responses are built from DTOs (`model/dto/client`), never from the entities, so a new entity
+field cannot leak into an API response by accident. The mapper layer additionally strips the vitest
+code frame from failure messages, because that frame contains the source of the hidden test file.
 
 ## SSE event envelope
 

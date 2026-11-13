@@ -6,7 +6,7 @@ CodePalace is an AI-driven coding-kata training platform. Users get an IDE-like 
 
 To run this code you need to build the backend and database by running:
 
-Docker compose up -d 
+Docker compose up -d
 
 And then CD into the frontend directory and run:
 
@@ -14,6 +14,14 @@ npm install && npm run dev
 
 The frontend will be served at localhost:5173
 And remember to run the Spring backend service.
+
+The database schema is applied by Flyway when the backend starts, so the backend needs two
+environment variables: `JWT_SECRET` (base64, at least 32 bytes) and `POSTGRES_PASSWORD` (the
+password of the `db` service, see `.env`). Hibernate validates the schema against the entities
+on startup and refuses to start if they disagree.
+
+The seeded development accounts (`test@example.com`, `test2@example.com`, `test3@example.com`)
+share the password `codepalace-dev`.
 
 ## Core ideas
 
