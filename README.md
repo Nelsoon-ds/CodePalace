@@ -37,6 +37,7 @@ CodePalace is an AI-driven coding-kata training platform. Users get an IDE-like 
 | [07-frontend.md](docs/07-frontend.md) | Monaco vs CodeMirror, workspace shell, state management |
 | [08-build-path-and-readings.md](docs/08-build-path-and-readings.md) | Implementation phases, activities, and curated documentation/reading list |
 | [09-kata-generation-spike-and-platform-design.md](docs/09-kata-generation-spike-and-platform-design.md) | Generation spike results, findings, and exercise/corpus design decisions |
+| [ERD.md](ERD.md) | Active PostgreSQL Entity-Relationship diagram and schema dictionary (V1) |
 
 ## Status
 
