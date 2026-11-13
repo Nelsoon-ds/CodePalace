@@ -3,58 +3,90 @@ package com.codepalace.project.service;
 import com.codepalace.project.model.Kata;
 import com.codepalace.project.model.Session;
 import com.codepalace.project.model.Workspace;
-import com.codepalace.project.model.dto.client.DraftRequest;
+import com.codepalace.project.model.dto.client.SessionDetailDto;
+import com.codepalace.project.model.mapper.SessionMapper;
 import com.codepalace.project.repository.KataRepository;
 import com.codepalace.project.repository.SessionRepository;
-import com.codepalace.project.repository.WorkspaceRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class SessionService {
 
-    @Autowired
-    private SessionRepository sessionRepository;
+    private static final String DEFAULT_LANGUAGE = "js";
 
-    @Autowired
-    private WorkspaceRepository workspaceRepository;
-    @Autowired
-    private KataRepository kataRepository;
+    private final SessionRepository sessionRepository;
+    private final WorkspaceService workspaceService;
+    private final KataRepository kataRepository;
+    private final CurrentUserService currentUserService;
+    private final SessionMapper sessionMapper;
 
-    public Optional<Session> getSession(UUID id) {
-        return sessionRepository.findById(id);
+    public SessionService(SessionRepository sessionRepository,
+                          WorkspaceService workspaceService,
+                          KataRepository kataRepository,
+                          CurrentUserService currentUserService,
+                          SessionMapper sessionMapper) {
+        this.sessionRepository = sessionRepository;
+        this.workspaceService = workspaceService;
+        this.kataRepository = kataRepository;
+        this.currentUserService = currentUserService;
+        this.sessionMapper = sessionMapper;
     }
 
-    public Session createSession(UUID workspaceId, UUID kataId) {
+    public SessionDetailDto getOwned(UUID id) {
+        Session session = requireOwned(id);
+        return sessionMapper.toDetail(session, kataTitle(session.getKataId()));
+    }
+
+    @Transactional
+    public SessionDetailDto create(UUID workspaceId, UUID kataId) {
+        Workspace workspace = workspaceService.requireOwned(workspaceId);
+
+        Kata kata = null;
+        if (kataId != null) {
+            kata = kataRepository.findById(kataId)
+                    .orElseThrow(() -> new EntityNotFoundException("Kata not found."));
+        }
+
+        Instant now = Instant.now();
         Session session = new Session();
-        Optional<Kata> kata = kataRepository.findById(kataId);
-        Workspace workspace = workspaceRepository.findById(workspaceId).orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
-        session.setKataId(kataId);
-        session.setProgrammingLanguage(kata.get().getProgrammingLanguage());
-        session.setStatus("active");
         session.setWorkspace(workspace);
-        session.setCreatedAt(Timestamp.from(Instant.now()));
-        session.setUpdatedAt(Timestamp.from(Instant.now()));
+        session.setKataId(kataId);
+        session.setProgrammingLanguage(kata != null ? kata.getProgrammingLanguage() : DEFAULT_LANGUAGE);
+        session.setStatus("active");
+        session.setCreatedAt(now);
+        session.setUpdatedAt(now);
         sessionRepository.save(session);
-        return  session;
+
+        return sessionMapper.toDetail(session, kata != null ? kata.getTitle() : null);
     }
 
-
-    public void replaceDraft(UUID id, DraftRequest draftData) {
-        Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Session not found"));
-        session.setDraftCode(draftData.code());
+    @Transactional
+    public void replaceDraft(UUID id, String code) {
+        Session session = requireOwned(id);
+        session.setDraftCode(code);
+        session.setUpdatedAt(Instant.now());
         sessionRepository.save(session);
     }
 
-    public void applyPartialUpdates(UUID id, String updates) {
+    /**
+     * Loads a session owned by the caller, or fails with 404.
+     */
+    public Session requireOwned(UUID id) {
+        UUID userId = currentUserService.requireId();
+        return sessionRepository.findOwnedSession(id, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Session not found."));
+    }
 
+    private String kataTitle(UUID kataId) {
+        if (kataId == null) {
+            return null;
+        }
+        return kataRepository.findById(kataId).map(Kata::getTitle).orElse(null);
     }
 }

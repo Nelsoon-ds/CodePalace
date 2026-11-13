@@ -2,7 +2,7 @@ package com.codepalace.project.model;
 
 import jakarta.persistence.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -17,10 +17,9 @@ public class Submission {
 
     private String code;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     public Submission() {
-
     }
 
     public UUID getId() {
@@ -47,15 +46,15 @@ public class Submission {
         this.code = code;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Submission(UUID id, UUID sessionId, String code, Timestamp createdAt) {
+    public Submission(UUID id, UUID sessionId, String code, Instant createdAt) {
         this.id = id;
         this.sessionId = sessionId;
         this.code = code;

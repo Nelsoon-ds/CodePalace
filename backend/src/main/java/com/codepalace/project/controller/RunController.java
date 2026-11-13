@@ -1,10 +1,8 @@
 package com.codepalace.project.controller;
 
-import com.codepalace.project.model.Run;
 import com.codepalace.project.model.dto.client.RunResponseDto;
 import com.codepalace.project.service.RunEventService;
 import com.codepalace.project.service.RunService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,15 +14,17 @@ import java.util.UUID;
 @RestController
 public class RunController {
 
-    @Autowired
-    private RunService runService;
+    private final RunService runService;
+    private final RunEventService runEventService;
 
-    @Autowired
-    private RunEventService runEventService;
+    public RunController(RunService runService, RunEventService runEventService) {
+        this.runService = runService;
+        this.runEventService = runEventService;
+    }
 
     @GetMapping("/api/runs/{id}")
     public RunResponseDto getRun(@PathVariable("id") UUID id) {
-        return runService.getRun(id);
+        return runService.getOwned(id);
     }
 
     @GetMapping(value = "/api/runs/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

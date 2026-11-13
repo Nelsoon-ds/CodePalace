@@ -9,10 +9,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class RunMapper {
 
+    /** Vitest prints the failing line of the test file; that line is hidden suite code. */
+    private static final Pattern SOURCE_FRAME = Pattern.compile("^\\s*(\\d+\\s*\\||\\|)");
+    private static final Pattern FRAME_POINTER = Pattern.compile("^\\s*[❯>→]");
+
+    private static final int MAX_DIFF_LENGTH = 2_000;
+    private static final int MAX_OUTPUT_LENGTH = 8_000;
 
     public List<AssertionDto> toAssertions (VitestResults results) {
         if (results == null || results.testResults() == null ) {
@@ -30,7 +37,7 @@ public class RunMapper {
         boolean passed = "passed".equalsIgnoreCase(assertion.status());
         String diff = null;
         if (!passed && assertion.failureMessages() != null && !assertion.failureMessages().isEmpty()) {
-            diff = assertion.failureMessages().get(0);
+            diff = sanitizeFailureMessage(assertion.failureMessages().get(0));
         }
         return new AssertionDto(
                 assertion.title(),
@@ -38,6 +45,69 @@ public class RunMapper {
                 assertion.duration(),
                 diff
         );
+    }
+
+    /**
+     * Removes the code frame Vitest appends to a failure message.
+     *
+     * <p>The frame contains the source of the hidden test file, which must never reach the
+     * browser (hidden-suite privacy invariant in docs/05-data-model-api.md).
+     */
+    static String sanitizeFailureMessage(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        StringBuilder cleaned = new StringBuilder();
+
+        for (String line : raw.split("\\R")) {
+            if (FRAME_POINTER.matcher(line).find()) {
+                break;
+            }
+            if (SOURCE_FRAME.matcher(line).find()) {
+                continue;
+            }
+            if (!cleaned.isEmpty()) {
+                cleaned.append('\n');
+            }
+            cleaned.append(line);
+        }
+
+        String result = cleaned.toString().trim();
+        if (result.isEmpty()) {
+            result = "Assertion failed";
+        }
+        return truncate(result, MAX_DIFF_LENGTH);
+    }
+
+    /**
+     * Keeps the tail of the container output and drops anything that looks like a source frame.
+     */
+    static String sanitizeOutput(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        StringBuilder cleaned = new StringBuilder();
+
+        for (String line : raw.split("\\R")) {
+            if (SOURCE_FRAME.matcher(line).find()) {
+                continue;
+            }
+            if (!cleaned.isEmpty()) {
+                cleaned.append('\n');
+            }
+            cleaned.append(line);
+        }
+
+        return truncate(cleaned.toString().trim(), MAX_OUTPUT_LENGTH);
+    }
+
+    private static String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return "..." + value.substring(value.length() - maxLength);
     }
 
     public RunResponseDto toResponse (Run run) {
@@ -51,7 +121,7 @@ public class RunMapper {
                     run.getDurationMs(),
                     0,0,0,
                     Collections.emptyList(),
-                    run.getOutputTail(),
+                    sanitizeOutput(run.getOutputTail()),
                     run.getCreatedAt()
             );
         }
@@ -66,7 +136,7 @@ public class RunMapper {
                 results.numPassedTests(),
                 results.numFailedTests(),
                 assertions,
-                run.getOutputTail(),
+                sanitizeOutput(run.getOutputTail()),
                 run.getCreatedAt()
         );
     }

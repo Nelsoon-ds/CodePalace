@@ -2,7 +2,7 @@ package com.codepalace.project.model;
 
 import jakarta.persistence.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -21,11 +21,11 @@ public class Job {
 
     private int attempts;
 
-    private Timestamp claimedAt;
+    private Instant claimedAt;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
-    public Job(UUID id, UUID runId, String workType, String status, int attempts, Timestamp claimedAt, Timestamp createdAt) {
+    public Job(UUID id, UUID runId, String workType, String status, int attempts, Instant claimedAt, Instant createdAt) {
         this.id = id;
         this.runId = runId;
         this.workType = workType;
@@ -78,19 +78,19 @@ public class Job {
         this.attempts = attempts;
     }
 
-    public Timestamp getClaimedAt() {
+    public Instant getClaimedAt() {
         return claimedAt;
     }
 
-    public void setClaimedAt(Timestamp claimedAt) {
+    public void setClaimedAt(Instant claimedAt) {
         this.claimedAt = claimedAt;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }

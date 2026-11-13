@@ -1,50 +1,56 @@
 package com.codepalace.project.controller;
 
-import com.codepalace.project.model.Session;
-import com.codepalace.project.model.Workspace;
 import com.codepalace.project.model.dto.client.KataSessionRequest;
-import com.codepalace.project.repository.WorkspaceRepository;
+import com.codepalace.project.model.dto.client.SessionDetailDto;
+import com.codepalace.project.model.dto.client.WorkspaceCreation;
+import com.codepalace.project.model.dto.client.WorkspaceSummaryDto;
 import com.codepalace.project.service.SessionService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.codepalace.project.service.WorkspaceService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 public class WorkspaceController {
 
-    @Autowired
-    private WorkspaceRepository workspaceRepository;
+    private final WorkspaceService workspaceService;
+    private final SessionService sessionService;
 
-    @Autowired
-    private SessionService sessionService;
-
-    @GetMapping("/api/workspaces")
-    public List<Workspace> getWorkspaces() {
-       return workspaceRepository.findAll();
-
+    public WorkspaceController(WorkspaceService workspaceService, SessionService sessionService) {
+        this.workspaceService = workspaceService;
+        this.sessionService = sessionService;
     }
 
-    @PostMapping("/api/workspaces/{workspaceId}/sessions")
-    public Optional<Session> createSession(@RequestBody KataSessionRequest request) {
-        System.out.println(request);
-        Optional<Session> session = Optional.ofNullable(sessionService.createSession(request.workspaceId(), request.kataId()));
-
-        return session;
+    @GetMapping("/api/workspaces")
+    public List<WorkspaceSummaryDto> getWorkspaces() {
+        return workspaceService.listForCurrentUser();
     }
 
     @PostMapping("/api/workspaces")
-    public void createWorkspace(@RequestBody Map<String, Object> request) {}
+    @ResponseStatus(HttpStatus.CREATED)
+    public WorkspaceSummaryDto createWorkspace(@Valid @RequestBody WorkspaceCreation request) {
+        return workspaceService.create(request.name());
+    }
+
+    @PostMapping("/api/workspaces/{workspaceId}/sessions")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SessionDetailDto createSession(@PathVariable("workspaceId") UUID workspaceId,
+                                           @RequestBody(required = false) KataSessionRequest request) {
+        return sessionService.create(workspaceId, request == null ? null : request.kataId());
+    }
 
     @DeleteMapping("/api/workspaces/{id}")
-    public void deleteWorkspace(@PathVariable("id") UUID id) {}
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteWorkspace(@PathVariable("id") UUID id) {
+        workspaceService.delete(id);
+    }
 }

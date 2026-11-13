@@ -10,7 +10,7 @@ services:
       - "127.0.0.1:5432:5432" # local dev: api/exec-runner run natively
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./backend/src/main/resources/db/migration/V1__init.sql:/docker-entrypoint-initdb.d/V1__init.sql:ro
+      # The schema is applied by Flyway on backend startup, not by an init script.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U codepalace -d codepalace"]
       interval: 5s 

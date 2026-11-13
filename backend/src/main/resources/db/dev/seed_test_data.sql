@@ -1,12 +1,13 @@
--- Development fixtures for a fresh database; run once after V1__init.sql.
+-- Development fixtures for a fresh database; run once after Flyway has migrated the database.
+-- The seeded accounts share the password "codepalace-dev" (Argon2id hash below).
 BEGIN;
 
 -- 1. Accounts and a workspace for the first user.
-insert into users (email, password_hash) values ('test@example.com', 'not-a-hash');
-insert into users (email, password_hash) values ('test2@example.com', 'not-a-hash');
-insert into users (email, password_hash) values ('test3@example.com', 'not-a-hash');
+insert into users (email, password_hash) values ('test@example.com', '$argon2id$v=19$m=15360,t=2,p=1$pi35sxsTUzN9+gXa1onuPmp1+HXR4xIApBilsi4dDXIalj8+4KKyoKVl686Fwe2WGFb3pbtHZghDIeASTaj1PA$rnnm5GJx83INaiTBeX2ZZ9dmKH2fKBHNHmrmt7Vvdlo');
+insert into users (email, password_hash) values ('test2@example.com', '$argon2id$v=19$m=15360,t=2,p=1$pi35sxsTUzN9+gXa1onuPmp1+HXR4xIApBilsi4dDXIalj8+4KKyoKVl686Fwe2WGFb3pbtHZghDIeASTaj1PA$rnnm5GJx83INaiTBeX2ZZ9dmKH2fKBHNHmrmt7Vvdlo');
+insert into users (email, password_hash) values ('test3@example.com', '$argon2id$v=19$m=15360,t=2,p=1$pi35sxsTUzN9+gXa1onuPmp1+HXR4xIApBilsi4dDXIalj8+4KKyoKVl686Fwe2WGFb3pbtHZghDIeASTaj1PA$rnnm5GJx83INaiTBeX2ZZ9dmKH2fKBHNHmrmt7Vvdlo');
 
-INSERT INTO workspaces (user_id, user_name) SELECT id, 'test-user' FROM users WHERE email = 'test@example.com';
+INSERT INTO workspaces (user_id, workspace_name) SELECT id, 'test-user' FROM users WHERE email = 'test@example.com';
 
 -- 2. Shared problems. Named exports match the sandbox's solution.mjs imports.
 INSERT INTO katas (title, statement_md, difficulty, programming_language, starter_code, reference_solution, status, visibility, created_by) VALUES
@@ -32,7 +33,7 @@ INSERT INTO katas (title, statement_md, difficulty, programming_language, starte
 
 -- 3. The first user's attempt context for Sum of Two Numbers.
 INSERT INTO sessions (workspace_id, kata_id, programming_language, status) SELECT w.id, k.id, k.programming_language, 'active'
-FROM workspaces w JOIN katas k ON k.title = 'Sum of Two Numbers' WHERE w.user_name = 'test-user';
+FROM workspaces w JOIN katas k ON k.title = 'Sum of Two Numbers' WHERE w.workspace_name = 'test-user';
 
 -- 4. Hidden tests, uploaded by the runner as tests/suite.test.mjs.
 -- Define the source once so suite_hash fingerprints the exact stored code.
