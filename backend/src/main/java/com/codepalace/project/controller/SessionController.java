@@ -1,7 +1,9 @@
 package com.codepalace.project.controller;
 
 import com.codepalace.project.model.Session;
+import com.codepalace.project.model.dto.client.CodeSubmission;
 import com.codepalace.project.service.SessionService;
+import com.codepalace.project.service.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +25,9 @@ public class SessionController {
     @Autowired
     private SessionService sessionService;
 
+    @Autowired
+    private SubmissionService submissionService;
+
     @GetMapping("/api/sessions/{id}")
     public Optional<Session> getSessionById(@PathVariable("id") UUID id) {
         Optional<Session> session = sessionService.getSession(id);
@@ -32,18 +37,17 @@ public class SessionController {
     @PutMapping("/api/sessions/{id}/draft")
     public void putDraftSubmission(
             @PathVariable("id") UUID id,
-            @RequestBody Map<String, Object> request) {}
-
-    @PatchMapping("/api/sessions/{id}")
-    public void patchSession(
-            @PathVariable("id") UUID id,
-            @RequestBody Map<String, Object> request) {}
+            @RequestBody String draftData) {
+        sessionService.replaceDraft(id, draftData);
+    }
 
     @PostMapping("/api/sessions/{id}/submissions")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void postSubmission(
             @PathVariable("id") UUID id,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody CodeSubmission submission) {
+        System.out.println("Client submission:" + submission);
+        submissionService.createSubmission(id,submission);
 
     }
 }

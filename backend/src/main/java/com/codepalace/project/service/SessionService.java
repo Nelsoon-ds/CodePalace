@@ -6,11 +6,13 @@ import com.codepalace.project.model.Workspace;
 import com.codepalace.project.repository.KataRepository;
 import com.codepalace.project.repository.SessionRepository;
 import com.codepalace.project.repository.WorkspaceRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +46,16 @@ public class SessionService {
     }
 
 
+    public void replaceDraft(UUID id, String draftData) {
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Session not found"));
 
+        session.setDraftCode(draftData);
 
+        sessionRepository.save(session);
+    }
 
+    public void applyPartialUpdates(UUID id, String updates) {
+
+    }
 }
