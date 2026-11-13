@@ -67,10 +67,10 @@ export function useSessionMutations(sessionId?: string) {
       }),
   });
   const submit = useMutation({
-    mutationFn: (code: string) =>
+    mutationFn: ({ sessionId, code}: { sessionId: string; code: string}) =>
       apiRequest<RunResult>(`/api/sessions/${sessionId}/submissions`, {
         method: "POST",
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ sessionId,code }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sessions", sessionId] }),
   });

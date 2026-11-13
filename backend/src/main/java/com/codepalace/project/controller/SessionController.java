@@ -41,12 +41,14 @@ public class SessionController {
         sessionService.replaceDraft(id, draftData);
     }
 
-    @PostMapping("/api/sessions/{id}/submissions")
+    @PostMapping("/api/sessions/{sessionId}/submissions")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void postSubmission(
-            @PathVariable("id") UUID id,
+            @PathVariable("sessionId") String sessionId,
             @RequestBody CodeSubmission submission) {
         System.out.println("Client submission:" + submission);
+        System.out.println(sessionId);
+        UUID id = UUID.fromString(sessionId);
         submissionService.createSubmission(id,submission);
 
     }

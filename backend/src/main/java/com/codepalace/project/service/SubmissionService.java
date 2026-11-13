@@ -1,13 +1,14 @@
 package com.codepalace.project.service;
 
-import com.codepalace.project.model.Run;
-import com.codepalace.project.model.Submission;
+import com.codepalace.project.model.*;
 import com.codepalace.project.model.dto.client.CodeSubmission;
-import com.codepalace.project.repository.RunRepository;
-import com.codepalace.project.repository.SubmissionRepository;
+import com.codepalace.project.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -20,21 +21,42 @@ public class SubmissionService {
     private JobNotificationService jobNotificationService;
 
     @Autowired
+    private TestSuiteRepository testSuiteRepository;
+
+    @Autowired
     private RunRepository runRepository;
 
-    public void createSubmission(UUID id, CodeSubmission codeSubmission) {
-        Submission submission = new Submission();
+    @Autowired
+    private SessionRepository sessionRepository;
 
-        submission.setSessionId(id);
+    @Autowired
+    private JobRepository jobRepository;
+
+    public void createSubmission(UUID sessionId, CodeSubmission codeSubmission) {
+        Submission submission = new Submission();
+        Session session = sessionRepository.findById(sessionId).orElseThrow(EntityNotFoundException::new);
+
+        TestSuite testsuite = testSuiteRepository.findFirstByKataIdAndProgrammingLanguageOrderByCreatedAtDesc(
+                session.getKataId(),
+                session.getProgrammingLanguage()).orElseThrow(EntityNotFoundException::new);
+
+        submission.setSessionId(sessionId);
         submission.setCode(codeSubmission.code());
+        submission.setCreatedAt(Timestamp.from(Instant.now()));
         submission = submissionRepository.save(submission);
 
         Run run = new Run();
-
+        run.setStatus("QUEUED");
         run.setSubmissionId(submission.getId());
-        run.setSuiteId(submission);
+        run.setSuiteId(testsuite.getId());
+        runRepository.save(run);
 
-
+        Job job = new Job();
+        job.setRunId(run.getId());
+        job.setStatus("QUEUED");
+        job.setWorkType("RUN_SUBMISSION");
+        job.setCreatedAt(Timestamp.from(Instant.now()));
+        jobRepository.save(job);
         jobNotificationService.notifyJobsChannel("New job added!");
 
     }

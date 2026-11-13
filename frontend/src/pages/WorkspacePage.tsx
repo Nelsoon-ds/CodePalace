@@ -135,7 +135,10 @@ export function WorkspacePage() {
     if (!sessionId || !codeValue.trim()) return;
     setEditorError("");
     try {
-      const result = await sessionMutations.submit.mutateAsync(codeValue);
+      const result = await sessionMutations.submit.mutateAsync({
+        sessionId,
+        code: codeValue,
+      });
       const runId = result.runId ?? result.id;
       if (!runId) throw new Error("The submission response did not include a run ID.");
       setActiveRun({ runId, result });
