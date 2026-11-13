@@ -232,7 +232,7 @@ export function WorkspacePage() {
                       codeRef.current = next;
                       setCodeValue(next);
                     }}
-                    value={codeValue}
+                    value={kata?.starterCode || "No starter code"}
                   />
                 ) : <p className={styles.smallHint}>Loading session…</p>}
               </div>

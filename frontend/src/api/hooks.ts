@@ -78,7 +78,7 @@ export function useSessionMutations(sessionId?: string) {
     mutationFn: ({ workspaceId, kataId }: { workspaceId: string; kataId: string }) =>
       apiRequest<Session>(`/api/workspaces/${workspaceId}/sessions`, {
         method: "POST",
-        body: JSON.stringify({ kataId }),
+        body: JSON.stringify({workspaceId, kataId}),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workspaces"] }),
   });
