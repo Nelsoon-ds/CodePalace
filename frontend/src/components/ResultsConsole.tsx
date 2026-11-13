@@ -1,4 +1,4 @@
-import type { Assertion, RunEvent, RunResult } from "../api/types";
+import type { RunEvent, RunResult } from "../api/types";
 import styles from "../styles/Workspace.module.css";
 
 type Props = {
