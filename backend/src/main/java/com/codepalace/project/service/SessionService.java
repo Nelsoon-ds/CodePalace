@@ -3,6 +3,7 @@ package com.codepalace.project.service;
 import com.codepalace.project.model.Kata;
 import com.codepalace.project.model.Session;
 import com.codepalace.project.model.Workspace;
+import com.codepalace.project.model.dto.client.DraftRequest;
 import com.codepalace.project.repository.KataRepository;
 import com.codepalace.project.repository.SessionRepository;
 import com.codepalace.project.repository.WorkspaceRepository;
@@ -46,12 +47,10 @@ public class SessionService {
     }
 
 
-    public void replaceDraft(UUID id, String draftData) {
+    public void replaceDraft(UUID id, DraftRequest draftData) {
         Session session = sessionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found"));
-
-        session.setDraftCode(draftData);
-
+        session.setDraftCode(draftData.code());
         sessionRepository.save(session);
     }
 

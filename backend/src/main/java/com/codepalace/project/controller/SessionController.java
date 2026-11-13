@@ -2,6 +2,8 @@ package com.codepalace.project.controller;
 
 import com.codepalace.project.model.Session;
 import com.codepalace.project.model.dto.client.CodeSubmission;
+import com.codepalace.project.model.dto.client.DraftRequest;
+import com.codepalace.project.model.dto.client.RunResponseDto;
 import com.codepalace.project.service.SessionService;
 import com.codepalace.project.service.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,19 +39,18 @@ public class SessionController {
     @PutMapping("/api/sessions/{id}/draft")
     public void putDraftSubmission(
             @PathVariable("id") UUID id,
-            @RequestBody String draftData) {
+            @RequestBody DraftRequest draftData) {
         sessionService.replaceDraft(id, draftData);
     }
 
     @PostMapping("/api/sessions/{sessionId}/submissions")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void postSubmission(
+    public RunResponseDto postSubmission(
             @PathVariable("sessionId") String sessionId,
             @RequestBody CodeSubmission submission) {
         System.out.println("Client submission:" + submission);
         System.out.println(sessionId);
         UUID id = UUID.fromString(sessionId);
-        submissionService.createSubmission(id,submission);
-
+        return submissionService.createSubmission(id,submission);
     }
 }

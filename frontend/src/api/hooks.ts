@@ -65,6 +65,10 @@ export function useSessionMutations(sessionId?: string) {
         method: "PUT",
         body: JSON.stringify({ code }),
       }),
+    onSuccess: (_data, { targetSessionId, code }) =>
+        queryClient.setQueryData<Session>(["sessions", targetSessionId], (old) =>
+            old ? { ...old, draftCode: code } : old
+        ),
   });
   const submit = useMutation({
     mutationFn: ({ sessionId, code}: { sessionId: string; code: string}) =>

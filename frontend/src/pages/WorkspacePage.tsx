@@ -54,17 +54,17 @@ export function WorkspacePage() {
   const lastSavedCode = useRef("");
 
   useEffect(() => {
-    if (!sessionId || !session) return;
-    if (hydratedSession.current !== sessionId) {
-      hydratedSession.current = sessionId;
-      const next = sessionCode(session);
-      codeRef.current = next;
-      lastSavedCode.current = next;
-      setCodeValue(next);
-      setActiveRun(undefined);
-      setEditorError("");
-      setSaveState("saved");
-    }
+    if (!sessionId || !session || !kata) return;
+    if (hydratedSession.current === sessionId) return;
+
+    const initial = session.draftCode || kata.starterCode || "";
+    hydratedSession.current = sessionId;
+    codeRef.current = initial;
+    lastSavedCode.current = initial;
+    setCodeValue(initial);
+    setActiveRun(undefined);
+    setEditorError("");
+    setSaveState("saved");
   }, [sessionId, session, setActiveRun, setSaveState]);
 
   const saveCode = async (targetSessionId: string, value: string) => {
@@ -89,10 +89,13 @@ export function WorkspacePage() {
   };
   saveRequest.current = (targetSessionId, value) => saveCode(targetSessionId, value);
 
+
   useEffect(() => {
     if (!sessionId || !session || codeValue === lastSavedCode.current) return;
     setSaveState("unsaved");
     if (saveTimer.current) clearTimeout(saveTimer.current);
+
+
     const targetSessionId = sessionId;
     saveTimer.current = setTimeout(() => void saveRequest.current(targetSessionId, codeRef.current), 800);
     return () => {
@@ -235,7 +238,7 @@ export function WorkspacePage() {
                       codeRef.current = next;
                       setCodeValue(next);
                     }}
-                    value={kata?.starterCode || "No starter code"}
+                    value={codeValue}
                   />
                 ) : <p className={styles.smallHint}>Loading session…</p>}
               </div>

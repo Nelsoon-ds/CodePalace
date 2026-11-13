@@ -2,6 +2,8 @@ package com.codepalace.project.service;
 
 import com.codepalace.project.model.*;
 import com.codepalace.project.model.dto.client.CodeSubmission;
+import com.codepalace.project.model.dto.client.RunResponseDto;
+import com.codepalace.project.model.mapper.RunMapper;
 import com.codepalace.project.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +34,10 @@ public class SubmissionService {
     @Autowired
     private JobRepository jobRepository;
 
-    public void createSubmission(UUID sessionId, CodeSubmission codeSubmission) {
+    @Autowired
+    private RunMapper runMapper;
+
+    public RunResponseDto createSubmission(UUID sessionId, CodeSubmission codeSubmission) {
         Submission submission = new Submission();
         Session session = sessionRepository.findById(sessionId).orElseThrow(EntityNotFoundException::new);
 
@@ -51,6 +56,8 @@ public class SubmissionService {
         run.setSuiteId(testsuite.getId());
         runRepository.save(run);
 
+        RunResponseDto runResponseDto = runMapper.toResponse(run);
+
         Job job = new Job();
         job.setRunId(run.getId());
         job.setStatus("QUEUED");
@@ -58,6 +65,9 @@ public class SubmissionService {
         job.setCreatedAt(Timestamp.from(Instant.now()));
         jobRepository.save(job);
         jobNotificationService.notifyJobsChannel("New job added!");
+
+
+        return runResponseDto;
 
     }
 }
