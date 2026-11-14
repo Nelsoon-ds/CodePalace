@@ -1,11 +1,12 @@
 package com.codepalace.project.model;
 
 import com.codepalace.project.model.dto.server.ValidationStats;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,7 +22,7 @@ public class TestSuite {
     private String framework;
     private String code;
     private String suiteHash;
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "mutation_strategies", columnDefinition = "jsonb")
@@ -32,7 +33,7 @@ public class TestSuite {
     @Column(name = "validation_stats", columnDefinition = "jsonb")
     private ValidationStats validationStats;
 
-    public TestSuite(UUID id, UUID kataId, String programmingLanguage, String framework, String code, String suiteHash, List<String> mutationStrategies, ValidationStats validationStats, Timestamp createdAt) {
+    public TestSuite(UUID id, UUID kataId, String programmingLanguage, String framework, String code, String suiteHash, List<String> mutationStrategies, ValidationStats validationStats, Instant createdAt) {
         this.id = id;
         this.kataId = kataId;
         this.programmingLanguage = programmingLanguage;
@@ -45,11 +46,11 @@ public class TestSuite {
     }
 
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -89,6 +90,18 @@ public class TestSuite {
         this.framework = framework;
     }
 
+    /**
+     * Hidden suite code must never leave the server (see the hidden-suite privacy invariant in
+     * docs/05-data-model-api.md). It is excluded from JSON as a safety net.
+     */
+    @JsonIgnore
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
 
     public String getSuiteHash() {
         return suiteHash;

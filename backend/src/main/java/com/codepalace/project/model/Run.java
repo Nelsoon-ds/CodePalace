@@ -28,7 +28,7 @@ public class Run {
     private Integer exitCode;
 
     @Column(name = "duration_ms")
-    private Integer durationMs;
+    private Double durationMs;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "results_jsonb", columnDefinition = "jsonb")
@@ -81,11 +81,11 @@ public class Run {
         this.exitCode = exitCode;
     }
 
-    public Integer getDurationMs() {
+    public Double getDurationMs() {
         return durationMs;
     }
 
-    public void setDurationMs(Integer durationMs) {
+    public void setDurationMs(Double durationMs) {
         this.durationMs = durationMs;
     }
 

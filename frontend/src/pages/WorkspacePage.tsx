@@ -13,12 +13,6 @@ function arrayFrom<T>(value: T[] | undefined) {
   return value ?? [];
 }
 
-function sessionCode(session?: Session) {
-  const draft = typeof session?.draft === "string" ? session.draft : session?.draft?.code;
-  return session?.draftCode ?? draft ?? session?.latestSubmission?.code ??
-    session?.submissions?.[session.submissions.length - 1]?.code ?? session?.kata?.starterCode ?? "";
-}
-
 function sessionLabel(session: Session) {
   return session.title ?? session.name ?? "Practice session";
 }
@@ -118,7 +112,8 @@ export function WorkspacePage() {
     [katas, session],
   );
 
- // if (!authenticated) return <Navigate to="/login" replace />;
+  // The API requires a bearer token for every route, so an anonymous visitor belongs on /login.
+  if (!authenticated) return <Navigate to="/login" replace />;
   if (workspaceQuery.isLoading) return <div className={styles.loadingPage}>Opening workspace…</div>;
   if (workspaceQuery.error) return <div className={styles.loadingPage}>Could not load workspaces: {workspaceQuery.error.message}</div>;
   if (!workspace) return <Navigate to="/workspaces" replace />;

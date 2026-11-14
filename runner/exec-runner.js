@@ -30,9 +30,25 @@ async function setupListener() {
   await client.query("LISTEN jobs_channel");
   console.log("Listening for new jobs...");
 
+  await requeueStaleJobs();
   await drainQueue();
 
   await client.query("SELECT pg_notify('jobs_channel', 'New job added!')");
+}
+
+// A worker that dies mid-run leaves its job in CLAIMED forever. Put those back on the queue
+// unless they already failed too often.
+async function requeueStaleJobs() {
+  const { rowCount } = await pool.query(
+    `UPDATE jobs
+        SET status = 'QUEUED', claimed_at = NULL
+      WHERE status = 'CLAIMED'
+        AND attempts < 3
+        AND claimed_at < now() - interval '10 minutes'`,
+  );
+  if (rowCount > 0) {
+    console.log(`Requeued ${rowCount} stale job(s)`);
+  }
 }
 
 async function loadRunFiles(runId) {
@@ -124,15 +140,20 @@ async function drainQueue() {
         runStatus = "FAILED";
       }
 
+      // result.results is null when the sandbox produced no report at all; optional chaining keeps
+      // the worker from crashing on that path (it used to leave the job stuck in CLAIMED).
       const durationMs =
-        result.results.testResults?.[0]?.endTime -
-          result.results.testResults?.[0]?.startTime || null;
+        (result.results?.testResults?.[0]?.endTime -
+          result.results?.testResults?.[0]?.startTime) || null;
 
       console.log("Duration (ms):", durationMs);
       console.log("Job completed:", job.id);
       console.log("Job result:", result);
       console.log("Exit code:", result.exitCode);
       console.log("Result:", result.results);
+
+      // Keep the tail only: the container output can be huge, and the backend sanitizes it again.
+      const outputTail = `${result.stdout || ""}\n${result.stderr || ""}`.slice(-8000);
 
       try {
         await pool.query("UPDATE jobs SET status = 'COMPLETED' WHERE id = $1", [
@@ -145,7 +166,7 @@ async function drainQueue() {
             result.exitCode,
             durationMs ? durationMs : 0,
             result.results === null ? null : JSON.stringify(result.results),
-            result.stdout + "\n" + result.stderr,
+            outputTail,
             job.run_id,
           ],
         );

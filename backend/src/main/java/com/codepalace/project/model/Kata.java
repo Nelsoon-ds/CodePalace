@@ -1,8 +1,9 @@
 package com.codepalace.project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -13,7 +14,7 @@ public class Kata {
                 String statementMd, String difficulty,
                 String programmingLanguage, String starterCode,
                 String referenceSolution,
-                String status, String visibility, String createdBy, Timestamp createdAt) {
+                String status, String visibility, String createdBy, Instant createdAt) {
         this.id = id;
         this.title = title;
         this.statementMd = statementMd;
@@ -52,7 +53,7 @@ public class Kata {
 
     private String createdBy;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     public UUID getId() {
         return id;
@@ -102,6 +103,11 @@ public class Kata {
         this.starterCode = starterCode;
     }
 
+    /**
+     * The reference solution is the answer key. It must never reach a client response, so it is
+     * excluded from JSON even if the entity is serialised by accident.
+     */
+    @JsonIgnore
     public String getReferenceSolution() {
         return referenceSolution;
     }
@@ -134,11 +140,11 @@ public class Kata {
         this.createdBy = createdBy;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }

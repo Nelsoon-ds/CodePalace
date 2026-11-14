@@ -1,9 +1,10 @@
 package com.codepalace.project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -12,8 +13,8 @@ import java.util.UUID;
 @Table(name = "workspaces")
 public class Workspace {
 
-    public Workspace(UUID userId, String workspaceName, Timestamp createdAt) {
-        this.userId = userId;
+    public Workspace(User user, String workspaceName, Instant createdAt) {
+        this.user = user;
         this.workspaceName = workspaceName;
         this.createdAt = createdAt;
     }
@@ -22,15 +23,16 @@ public class Workspace {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @JoinTable(name = "users")
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
 
     private String workspaceName;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
-    @OneToMany
-    @JoinColumn(name = "workspace_id")
+    @OneToMany(mappedBy = "workspace", fetch = FetchType.LAZY)
     private List<Session> sessions = new ArrayList<>();
 
     public void setId(UUID id) {
@@ -48,17 +50,21 @@ public class Workspace {
     public Workspace() {
     }
 
-
     public UUID getId() {
         return id;
     }
 
+    @JsonProperty("userId")
     public UUID getUserId() {
-        return userId;
+        return user != null ? user.getUuid() : null;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @JsonProperty("name")
@@ -70,11 +76,11 @@ public class Workspace {
         this.workspaceName = workspaceName;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }

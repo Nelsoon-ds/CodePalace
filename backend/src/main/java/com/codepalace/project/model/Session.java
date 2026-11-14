@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -13,25 +13,12 @@ public class Session {
 
     public Session () {}
 
-    public Session(UUID id, UUID workspaceId,
-                   UUID kataId, String programmingLanguage,
-                   String status,
-                   Timestamp createdAt, Timestamp updatedAt) {
-        this.id = id;
-        this.workspace = workspace;
-        this.kataId = kataId;
-        this.programmingLanguage = programmingLanguage;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "workspace_id", nullable = false)
     @JsonIgnore
     private Workspace workspace;
 
@@ -41,11 +28,11 @@ public class Session {
 
     private String status;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 
-    @Column(name = "draft_code")
+    @Column(name = "draft_code", columnDefinition = "text")
     private String draftCode;
 
     public Workspace getWorkspace() {
@@ -102,19 +89,19 @@ public class Session {
         this.status = status;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Timestamp getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Timestamp updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 }
